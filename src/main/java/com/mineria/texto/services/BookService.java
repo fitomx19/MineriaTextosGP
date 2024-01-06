@@ -82,14 +82,17 @@ public class BookService {
     }
 
     private void countWordOccurrences(String content, Map<String, Integer> wordOccurrences, String searchText) {
-        // Dividir el contenido en palabras y contar las ocurrencias de palabras específicas
-        String[] words = content.split("\\s+");
-        for (String word : words) {
-            if (word.equalsIgnoreCase(searchText)) {
-                wordOccurrences.put(searchText, wordOccurrences.getOrDefault(searchText, 0) + 1);
-            }
+    // Dividir el contenido en palabras y contar las ocurrencias de palabras específicas de la frase
+    String[] searchWords = searchText.split("\\s+");
+    for (String searchWord : searchWords) {
+        if (!searchWord.isEmpty()) {
+            int occurrences = countOccurrences(content, searchWord);
+            wordOccurrences.put(searchWord, occurrences);
         }
     }
+}
+
+
 
     private boolean containsSearchText(String content, String searchText) {
         return content.toLowerCase().contains(searchText.toLowerCase());
