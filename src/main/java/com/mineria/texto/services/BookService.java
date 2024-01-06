@@ -40,47 +40,62 @@ public class BookService {
         return occurrencesMap;
     }
 
-       public Map<String, Object> searchByTFIDF(String searchText) {
+    public Map<String, Object> searchByTFIDF(String searchText) {
         long startTime = System.currentTimeMillis();
 
         List<Book> allBooks = bookRepository.findAll();
+        List<Map<String, Object>> result = new ArrayList<>();
 
-        // Calcular el TF-IDF para cada libro
         for (Book book : allBooks) {
+            Map<String, Object> bookInfo = new HashMap<>();
             String content = book.getContenido().toLowerCase();
             double tfidfScore = calculateTFIDF(content, searchText.toLowerCase(), allBooks);
             book.setTFIDFScore(tfidfScore);
+
+            // Contar las ocurrencias de palabras específicas en el contenido del libro
+            Map<String, Integer> wordOccurrences = new HashMap<>();
+            countWordOccurrences(content, wordOccurrences, searchText.toLowerCase());
+
+            // Agregar la información del libro al resultado
+            bookInfo.put("name", book.getName());
+            bookInfo.put("author", book.getAuthor());
+            bookInfo.put("year", book.getYear());
+            bookInfo.put("num_palabras", book.getNum_Palabras());
+            bookInfo.put("tfidfScore", tfidfScore);
+            bookInfo.put("wordOccurrences", wordOccurrences);
+
+            result.add(bookInfo);
         }
 
         // Ordenar los resultados por relevancia (mayor a menor)
-        List<Map<String, Object>> result = allBooks.stream()
-                .sorted(Comparator.comparingDouble(Book::getTFIDFScore).reversed())
-                .map(book -> {
-                    Map<String, Object> bookInfo = new HashMap<>();
-                    bookInfo.put("name", book.getName());
-                    bookInfo.put("author", book.getAuthor());
-                    bookInfo.put("year", book.getYear());
-                    bookInfo.put("num_palabras", book.getNum_Palabras());
-                    bookInfo.put("tfidfScore", book.getTFIDFScore());
-                    return bookInfo;
-                })
-                .collect(Collectors.toList());
+        result.sort(Comparator.comparingDouble(bookInfo -> (double) ((Map<String, Object>) bookInfo).get("tfidfScore")).reversed());
 
         long endTime = System.currentTimeMillis();
         long executionTime = endTime - startTime;
         System.out.println("Tiempo de respuesta: " + executionTime + " ms");
-        
+
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("books", result);
         responseMap.put("executionTime", executionTime);
-        
-        return responseMap;
 
+        return responseMap;
     }
-    
-       
-       
-       private double calculateTFIDF(String content, String searchText, List<Book> allBooks) {
+
+    private void countWordOccurrences(String content, Map<String, Integer> wordOccurrences, String searchText) {
+        // Dividir el contenido en palabras y contar las ocurrencias de palabras específicas
+        String[] words = content.split("\\s+");
+        for (String word : words) {
+            if (word.equalsIgnoreCase(searchText)) {
+                wordOccurrences.put(searchText, wordOccurrences.getOrDefault(searchText, 0) + 1);
+            }
+        }
+    }
+
+    private boolean containsSearchText(String content, String searchText) {
+        return content.toLowerCase().contains(searchText.toLowerCase());
+    }
+
+    private double calculateTFIDF(String content, String searchText, List<Book> allBooks) {
         // Calcular el TF (Frecuencia de Término)
         double tf = (double) countOccurrences(content, searchText) / content.split("\\s+").length;
 
@@ -104,10 +119,6 @@ public class BookService {
 
         // Calcular IDF
         return Math.log((double) allBooks.size() / documentsWithTerm);
-    }
-
-    private boolean containsSearchText(String content, String searchText) {
-        return content.toLowerCase().contains(searchText.toLowerCase());
     }
 
     private int countOccurrences(String content, String searchText) {
