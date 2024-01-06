@@ -1,15 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mineria.texto.repository;
- 
+
 import com.mineria.texto.entities.Book;
-import org.springframework.data.jpa.repository.JpaRepository;
-/**
- *
- * @author Alex
- */
-public interface BookRepository extends JpaRepository<Book,Long> {
-    
+import java.util.List;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+
+public interface BookRepository extends MongoRepository<Book, String> {
+    @Query("{ $text: { $search: ?0 } }")
+    List<Book> searchByContent(String searchText);
 }

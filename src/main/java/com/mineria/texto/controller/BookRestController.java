@@ -1,56 +1,76 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mineria.texto.controller;
+
 import com.mineria.texto.entities.Book;
 import com.mineria.texto.repository.BookRepository;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
-import java.util.List;
+import com.mineria.texto.services.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-/**
- *
- * @author Alex
- */
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+
+
+
 @RestController
 @RequestMapping("/book")
 public class BookRestController {
+
+    private final BookService bookService;
+
+    @Autowired
+    public BookRestController(BookService bookService) {
+        this.bookService = bookService;
+    }
+
     @Autowired
     BookRepository bookRepository;
-    
+
     @GetMapping()
     public List<Book> findAll() {
         return bookRepository.findAll();
     }
-    
+
     @GetMapping("/{id}")
-    public Object get(@PathVariable String id) {
-        return null;
+    public ResponseEntity<Book> get(@PathVariable String id) {
+        return bookRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/search")
+    public List<String> searchByContent(@RequestBody Map<String, String> requestBody) {
+        String searchText = requestBody.get("searchText");
+        return bookService.searchByContentAndGetNames(searchText);
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<?> put(@PathVariable String id, @RequestBody Book input) {
-        return null;
+    @GetMapping("/countOccurrences")
+    public Map<String, Integer> countOccurrencesInBooks(@RequestBody Map<String, String> requestBody) {
+        String searchText = requestBody.get("searchText");
+        return bookService.countOccurrencesInBooks(searchText);
     }
     
+    @GetMapping("/searchByTFIDF")
+    public Map<String, Object> searchByTFIDF(@RequestBody Map<String, String> requestBody) {
+        String searchText = requestBody.get("searchText");
+        return bookService.searchByTFIDF(searchText);
+    }
+
     @PostMapping
-    public ResponseEntity<?> post(@RequestBody Book input) {
-        Book save = bookRepository.save(input);
-        return ResponseEntity.ok(save);
+    public ResponseEntity<Book> post(@RequestBody Book input) {
+        System.out.println(input);
+        Book savedBook = bookRepository.save(input);
+        return ResponseEntity.ok(savedBook);
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable String id) {
-        return null;
+        return bookRepository.findById(id)
+                .map(book -> {
+                    bookRepository.deleteById(id);
+                    return ResponseEntity.ok().build();
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
-    
-    
 }
