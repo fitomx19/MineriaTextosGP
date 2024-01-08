@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-
-
-
 @RestController
 @RequestMapping("/book")
 public class BookRestController {
@@ -27,11 +24,13 @@ public class BookRestController {
     @Autowired
     BookRepository bookRepository;
 
+    @CrossOrigin(origins = "*")
     @GetMapping()
     public List<Book> findAll() {
         return bookRepository.findAll();
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/{id}")
     public ResponseEntity<Book> get(@PathVariable String id) {
         return bookRepository.findById(id)
@@ -39,24 +38,28 @@ public class BookRestController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/search")
     public List<String> searchByContent(@RequestBody Map<String, String> requestBody) {
         String searchText = requestBody.get("searchText");
         return bookService.searchByContentAndGetNames(searchText);
     }
     
+    @CrossOrigin(origins = "*")
     @GetMapping("/countOccurrences")
     public Map<String, Integer> countOccurrencesInBooks(@RequestBody Map<String, String> requestBody) {
         String searchText = requestBody.get("searchText");
         return bookService.countOccurrencesInBooks(searchText);
     }
     
-    @GetMapping("/searchByTFIDF")
+    @CrossOrigin(origins = "*")
+    @PostMapping("/searchByTFIDF")
     public Map<String, Object> searchByTFIDF(@RequestBody Map<String, String> requestBody) {
         String searchText = requestBody.get("searchText");
         return bookService.searchByTFIDF(searchText);
     }
 
+    @CrossOrigin(origins = "*")
     @PostMapping
     public ResponseEntity<Book> post(@RequestBody Book input) {
         System.out.println(input);
@@ -64,6 +67,7 @@ public class BookRestController {
         return ResponseEntity.ok(savedBook);
     }
 
+    @CrossOrigin(origins = "*")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable String id) {
         return bookRepository.findById(id)
